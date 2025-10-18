@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const db_1 = __importDefault(require("./utils/db"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const index_1 = require("./index");
+console.log("hit server.ts");
 dotenv_1.default.config();
 (0, db_1.default)()
     .then(() => {

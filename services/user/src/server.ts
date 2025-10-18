@@ -3,6 +3,9 @@ import dotenv from "dotenv";
 import express from "express";
 import {app} from "./index";
 
+console.log("hit server.ts");
+
+
 dotenv.config();
 
 connectDB()
