@@ -4,9 +4,6 @@ import express from "express";
 import {app} from "./index";
 import { v2 as cloudinary, UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
 
-console.log("hit server.ts");
-
-
 dotenv.config();
 
 cloudinary.config({ 

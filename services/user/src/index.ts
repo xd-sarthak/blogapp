@@ -13,9 +13,6 @@ app.use(cors({
     credentials: true
 }));
 
-console.log("hit index.ts");
-
-
 app.use("/api/v1",userRoute);
 
 app.get("/health-route",(req,res) =>{
