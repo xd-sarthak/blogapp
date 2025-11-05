@@ -15,6 +15,12 @@ const isAuth = async (req, res, next) => {
             return;
         }
         const token = authHeader.split(" ")[1];
+        if (!token || token.trim().length === 0) {
+            res.status(401).json({
+                message: "Invalid token format"
+            });
+            return;
+        }
         const decodedValue = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
         if (!decodedValue || !decodedValue.user) {
             res.status(401).json({
@@ -26,10 +32,22 @@ const isAuth = async (req, res, next) => {
         next();
     }
     catch (error) {
-        console.log("JWT Verification error: ", error);
-        res.status(401).json({
-            message: "Please Login: JWT error",
-        });
+        console.error("JWT Verification error: ", error);
+        if (error instanceof jsonwebtoken_1.default.TokenExpiredError) {
+            res.status(401).json({
+                message: "Token expired, please login again",
+            });
+        }
+        else if (error instanceof jsonwebtoken_1.default.JsonWebTokenError) {
+            res.status(401).json({
+                message: "Invalid token, please login again",
+            });
+        }
+        else {
+            res.status(401).json({
+                message: "Please Login: JWT error",
+            });
+        }
     }
 };
 exports.isAuth = isAuth;

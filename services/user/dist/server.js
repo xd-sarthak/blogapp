@@ -7,7 +7,6 @@ const db_1 = __importDefault(require("./utils/db"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const index_1 = require("./index");
 const cloudinary_1 = require("cloudinary");
-console.log("hit server.ts");
 dotenv_1.default.config();
 cloudinary_1.v2.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
