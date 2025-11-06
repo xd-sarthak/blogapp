@@ -12,6 +12,7 @@ app.use(cors({
     origin: process.env.CORS_ORIGIN || "*",  // Allow all origins for testing
     credentials: true
 }));
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/v1",userRoute);
 

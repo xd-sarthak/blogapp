@@ -14,6 +14,7 @@ app.use((0, cors_1.default)({
     origin: process.env.CORS_ORIGIN || "*", // Allow all origins for testing
     credentials: true
 }));
+app.use(express_1.default.urlencoded({ extended: true }));
 app.use("/api/v1", user_route_1.default);
 app.get("/health-route", (req, res) => {
     res.json({ message: "ok" });

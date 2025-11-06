@@ -25,9 +25,50 @@ export const createBlog = TryCatch(async (req: AuthenticatedRequest, res) => {
     return;
   }
 
-  const cloud = await cloudinary.uploader.upload(fileBuffer.content, {
-    folder: "blogs",
-  });
+  // Retry logic for Cloudinary upload with timeout handling
+  let cloud;
+  const maxRetries = 3;
+  
+  try {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        cloud = await cloudinary.uploader.upload(fileBuffer.content, {
+          folder: "blogs",
+          resource_type: "auto",
+          quality: "auto",
+          timeout: 120000, // 120 seconds timeout
+          chunk_size: 6000000, // 6MB chunks for large files
+        });
+        break; // Success, exit retry loop
+      } catch (cloudinaryError: any) {
+        console.error(`Cloudinary upload error (attempt ${attempt}/${maxRetries}):`, cloudinaryError);
+        
+        // If it's a timeout error and we have retries left, wait and retry
+        if (cloudinaryError?.http_code === 499 && attempt < maxRetries) {
+          const waitTime = attempt * 2000; // Exponential backoff: 2s, 4s, 6s
+          console.log(`Retrying upload in ${waitTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+        
+        // If it's not a timeout or we're out of retries, throw
+        throw cloudinaryError;
+      }
+    }
+
+    if (!cloud) {
+      return res.status(500).json({
+        message: "Failed to upload image after multiple attempts. Please try again later.",
+      });
+    }
+  } catch (cloudinaryError: any) {
+    console.error("Cloudinary upload error:", cloudinaryError);
+    return res.status(500).json({
+      message: cloudinaryError?.http_code === 499 
+        ? "Upload timed out. Please try again with a smaller image or check your connection."
+        : "Failed to upload image. Please try again.",
+    });
+  }
 
   const result =
     await sql`INSERT INTO blogs (title, description, image, blogcontent,category, author) VALUES (${title}, ${description},${cloud.secure_url},${blogcontent},${category},${req.user?._id}) RETURNING *`;
@@ -72,11 +113,52 @@ export const updateBlogs = TryCatch(async (req: AuthenticatedRequest, res) => {
       return;
     }
 
-    const cloud = await cloudinary.uploader.upload(fileBuffer.content, {
-        folder: "blogs",
-      });
-  
+    // Retry logic for Cloudinary upload with timeout handling
+    let cloud;
+    const maxRetries = 3;
+    
+    try {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          cloud = await cloudinary.uploader.upload(fileBuffer.content, {
+            folder: "blogs",
+            resource_type: "auto",
+            quality: "auto",
+            timeout: 120000, // 120 seconds timeout
+            chunk_size: 6000000, // 6MB chunks for large files
+          });
+          break; // Success, exit retry loop
+        } catch (cloudinaryError: any) {
+          console.error(`Cloudinary upload error (attempt ${attempt}/${maxRetries}):`, cloudinaryError);
+          
+          // If it's a timeout error and we have retries left, wait and retry
+          if (cloudinaryError?.http_code === 499 && attempt < maxRetries) {
+            const waitTime = attempt * 2000; // Exponential backoff: 2s, 4s, 6s
+            console.log(`Retrying upload in ${waitTime}ms...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            continue;
+          }
+          
+          // If it's not a timeout or we're out of retries, throw
+          throw cloudinaryError;
+        }
+      }
+
+      if (!cloud) {
+        return res.status(500).json({
+          message: "Failed to upload image after multiple attempts. Please try again later.",
+        });
+      }
+      
       imageURL = cloud.secure_url;
+    } catch (cloudinaryError: any) {
+      console.error("Cloudinary upload error:", cloudinaryError);
+      return res.status(500).json({
+        message: cloudinaryError?.http_code === 499 
+          ? "Upload timed out. Please try again with a smaller image or check your connection."
+          : "Failed to upload image. Please try again.",
+      });
+    }
   }
 
   const updatedBlog = await sql`UPDATE blogs SET

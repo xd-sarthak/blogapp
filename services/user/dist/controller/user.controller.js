@@ -144,33 +144,62 @@ exports.updateProfilePic = (0, TryCatch_1.default)(async (req, res) => {
             message: "Failed to generate buffer",
         });
     }
+    // Retry logic for Cloudinary upload
+    let cloud;
+    const maxRetries = 3;
     try {
-        const cloud = await cloudinary_1.v2.uploader.upload(fileBuffer.content, {
-            folder: "blogs",
-            resource_type: "auto",
-            quality: "auto",
-        });
-        const user = await User_1.default.findByIdAndUpdate(req.user?._id, {
-            image: cloud.secure_url,
-        }, { new: true });
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found"
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                cloud = await cloudinary_1.v2.uploader.upload(fileBuffer.content, {
+                    folder: "blogs",
+                    resource_type: "auto",
+                    quality: "auto",
+                    timeout: 120000, // 120 seconds timeout
+                    chunk_size: 6000000, // 6MB chunks for large files
+                });
+                break; // Success, exit retry loop
+            }
+            catch (cloudinaryError) {
+                console.error(`Cloudinary upload error (attempt ${attempt}/${maxRetries}):`, cloudinaryError);
+                // If it's a timeout error and we have retries left, wait and retry
+                if (cloudinaryError?.http_code === 499 && attempt < maxRetries) {
+                    const waitTime = attempt * 2000; // Exponential backoff: 2s, 4s, 6s
+                    console.log(`Retrying upload in ${waitTime}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                    continue;
+                }
+                // If it's not a timeout or we're out of retries, throw
+                throw cloudinaryError;
+            }
+        }
+        if (!cloud) {
+            return res.status(500).json({
+                message: "Failed to upload image after multiple attempts. Please try again later.",
             });
         }
-        const token = jsonwebtoken_1.default.sign({ user }, process.env.JWT_SECRET, {
-            expiresIn: "5d",
-        });
-        res.json({
-            message: "User Profile pic updated",
-            token,
-            user,
-        });
     }
     catch (cloudinaryError) {
         console.error("Cloudinary upload error:", cloudinaryError);
         return res.status(500).json({
-            message: "Failed to upload image. Please try again.",
+            message: cloudinaryError?.http_code === 499
+                ? "Upload timed out. Please try again with a smaller image or check your connection."
+                : "Failed to upload image. Please try again.",
         });
     }
+    const user = await User_1.default.findByIdAndUpdate(req.user?._id, {
+        image: cloud.secure_url,
+    }, { new: true });
+    if (!user) {
+        return res.status(404).json({
+            message: "User not found"
+        });
+    }
+    const token = jsonwebtoken_1.default.sign({ user }, process.env.JWT_SECRET, {
+        expiresIn: "5d",
+    });
+    res.json({
+        message: "User Profile pic updated",
+        token,
+        user,
+    });
 });
