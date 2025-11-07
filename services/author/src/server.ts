@@ -4,6 +4,7 @@ import cors from "cors";
 import { v2 as cloudinary } from "cloudinary";
 import { sql } from "./utils/db";
 import blogRoutes from "./routes/blog.route";
+import { connectRabbitMQ } from "./utils/rabbitMQ";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+connectRabbitMQ();
 
 async function initDB() {
     try {

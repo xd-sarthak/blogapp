@@ -14,9 +14,11 @@
   "license": "ISC",
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
+    "@types/amqplib": "^0.10.8",
     "@types/concurrently": "^7.0.3",
     "@types/cors": "^2.8.19",
     "@types/jsonwebtoken": "^9.0.10",
+    "amqplib": "^0.10.9",
     "cloudinary": "^2.7.0",
     "concurrently": "^9.2.1",
     "cors": "^2.8.5",

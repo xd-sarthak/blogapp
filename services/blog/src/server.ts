@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { createClient, RedisClientOptions } from "redis";
 import blogRoutes from "./routes/blog.route.js";
+import { startCacheConsumer } from "./utils/consumer.js";
 
 dotenv.config();
 
@@ -10,6 +11,8 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+
+startCacheConsumer();
 
 const port = process.env.PORT || 5000;
 
