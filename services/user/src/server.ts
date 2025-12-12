@@ -1,28 +1,29 @@
-import connectDB from "./utils/db";
-import dotenv from "dotenv";
 import express from "express";
-import {app} from "./index";
-import { v2 as cloudinary, UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
+import dotenv from "dotenv";
+import connectDb from "./utils/db.js";
+import userRoutes from "./routes/user.js";
+import { v2 as cloudinary } from "cloudinary";
+import cors from "cors";
 
 dotenv.config();
 
-cloudinary.config({ 
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-  api_key: process.env.CLOUDINARY_API_KEY!,
-  api_secret: process.env.CLOUDINARY_API_SECRET!,
+cloudinary.config({
+  cloud_name: process.env.Cloud_Name,
+  api_key: process.env.Cloud_Api_Key,
+  api_secret: process.env.Cloud_Api_Secret,
 });
 
+const app = express();
 
-connectDB()
-.then( () => {
-    app.listen(process.env.PORT || 5000, () => {
-        console.log(`server is running at port ${process.env.PORT}`)
-    })
-})
-.catch((err) => {
-    console.log("MONGODB connection failed" , err);
+app.use(express.json());
+app.use(cors());
+
+connectDb();
+
+app.use("/api/v1", userRoutes);
+
+const port = process.env.PORT;
+
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
 });
-
-
-
-

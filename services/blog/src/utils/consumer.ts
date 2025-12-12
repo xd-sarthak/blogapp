@@ -11,10 +11,10 @@ export const startCacheConsumer = async () => {
   try {
     const connection = await amqp.connect({
       protocol: "amqp",
-      hostname: process.env.RABBITMQ_HOSTT,
+      hostname: process.env.Rabbimq_Host,
       port: 5672,
-      username: process.env.RABBITMQ_USERNAME,
-      password: process.env.RABBITMQ_PASSWORD,
+      username: process.env.Rabbimq_Username,
+      password: process.env.Rabbimq_Password,
     });
 
     const channel = await connection.createChannel();
